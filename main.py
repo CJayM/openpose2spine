@@ -4,13 +4,11 @@ import os
 import os.path
 import json
 
-# from pygame.locals import *
-
-DIR_WITH_POSES = r"D:\develop\godot\Glazovs_doors\openpose\pose_walk"
+DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\pose_walk"
 ANIM_NAME = "walk"
-# DIR_WITH_POSES = r"D:\develop\godot\Glazovs_doors\openpose\openpose_run_forward_flip"
+# DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\openpose_run_forward_flip"
 # ANIM_NAME = "run_forward_flip"
-DIR_WITH_POSES = r"D:\develop\godot\Glazovs_doors\openpose\openpose_kick"
+DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\openpose_kick"
 ANIM_NAME = "kick"
 
 
