@@ -62,7 +62,7 @@ if __name__ == "__main__":
     animation = Animation()
     animation.read_from_dir(DIR_WITH_POSES, ANIM_NAME)
 
-    from app import MainWindow
+    from main_window import MainWindow
 
     main_app = MainWindow()
     main_app.set_skeletal(skeletal)
