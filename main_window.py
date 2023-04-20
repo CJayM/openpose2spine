@@ -5,6 +5,7 @@ from app import BaseApp
 
 class MainWindow(BaseApp):
     def __init__(self, *args, **kwargs):
+        self.frame_slider = None
         self.animation = None
         self.elapsed_text = None
         self.fps_text = None
@@ -15,10 +16,13 @@ class MainWindow(BaseApp):
         self.right_panel = None
         self.left_panel = None
         self.skeletal = None
+        self.autoplay = True
         super().__init__(*args, **kwargs)
 
     def init_ui(self):
-        with dpg.child_window(tag="left_panel", width=200, height=300) as left_panel:
+        dpg.configure_item(self.main_window, no_scrollbar=True)
+
+        with dpg.child_window(width=200, height=300) as left_panel:
             self.left_panel = left_panel
 
             with dpg.group(horizontal=True):
@@ -26,11 +30,20 @@ class MainWindow(BaseApp):
                 self.elapsed_text = dpg.add_text(default_value="elapsed")
                 self.fps_text = dpg.add_text(default_value="fps")
 
-        with dpg.child_window(width=500, height=500, pos=(220, 8)) as right_panel:
+        with dpg.child_window(width=500, height=500, pos=(220, 8), no_scrollbar=True) as right_panel:
             self.right_panel = right_panel
+            self.frame_slider = dpg.add_slider_int(pos=[0, 500], width=500, height=4, indent=0,
+                                                   callback=self.set_current_frame)
 
             with dpg.drawlist(width=500, height=500) as canvas:
                 self.canvas = canvas
+        with dpg.item_handler_registry(show=False, tag="__frame_slider_handler"):
+            # m_release = dpg.add_mouse_release_handler(button=dpg.mvMouseButton_Left)
+            # dpg.add_item_clicked_handler(tag=self.frame_slider, callback=self.on_current_frame_drop)
+            dpg.add_item_hover_handler(callback=self.on_hover_in)
+            # dpg.add_item_clicked_handler(callback=self.on_hover_out)
+
+        dpg.bind_item_handler_registry(self.frame_slider, "__frame_slider_handler")
 
     def set_skeletal(self, skeletal):
         self.skeletal = skeletal
@@ -42,6 +55,7 @@ class MainWindow(BaseApp):
 
     def set_animation(self, animation):
         self.animation = animation
+        dpg.configure_item(self.frame_slider, min_value=0, max_value=animation.frames_count - 1)
 
     def on_resize(self, id, rect):
         inner_width = rect[2]
@@ -54,15 +68,24 @@ class MainWindow(BaseApp):
 
         rect = dpg.get_item_rect_size(self.right_panel)
         dpg.configure_item(self.canvas, width=rect[0], height=rect[1])
+        dpg.configure_item(self.frame_slider, width=rect[0], pos=(0, rect[1] - 22))
 
     def on_update(self, delta: float):
         pass
-        # dpg.set_value(self.score_text, "{:.5f}".format(delta))
-        # dpg.set_value(self.elapsed_text, "{:.5f}".format(self.elapsed))
+
+    def set_current_frame(self, id, value, data):
+        print(value, data)
+
+    def on_hover_in(self, id, value):
+        self.autoplay = False
 
     def on_frame(self, frame):
+        if not self.autoplay:
+            return
+
         frame = frame % self.animation.frames_count
         dpg.set_value(self.fps_text, "{:d}".format(frame))
+        dpg.set_value(self.frame_slider, frame)
 
         frame_data = self.animation.frames[frame]
         for i in range(self.skeletal.bones_count):
