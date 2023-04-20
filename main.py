@@ -2,7 +2,8 @@ import glob
 import os
 import os.path
 import json
-import math
+
+from skeletal import Skeletal
 
 DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\pose_walk"
 ANIM_NAME = "walk"
@@ -29,87 +30,6 @@ def extract_frames(images):
                 points.append((all_data[i], all_data[i + 1]))
             res.append(points)
     return res
-
-
-BONE_COLORS = [
-    (153, 0, 61),
-    (153, 51, 0),
-    (153, 102, 0),
-    (153, 153, 0),
-    (102, 153, 0),
-    (51, 153, 00),
-    (00, 153, 00),
-    (00, 153, 51),
-    (00, 153, 102),
-    (00, 153, 153),
-    (00, 102, 153),
-    (00, 51, 153),
-    (00, 00, 153),
-    (51, 00, 153),
-    (102, 00, 153),
-    (153, 00, 153),
-    (153, 00, 102),
-    (153, 00, 51),
-
-]
-
-NUM_POINTS = len(BONE_COLORS)
-
-EDGES_INDEXES = [
-    (0, 1),
-    (0, 15),
-    (0, 16),
-    (1, 8),
-    (1, 2),
-    (1, 5),
-    (2, 3),
-    (3, 4),
-    (5, 6),
-    (6, 7),
-    (8, 9),
-    (8, 12),
-    (9, 10),
-    (10, 11),
-    (11, 22),
-    (11, 24),
-    (12, 13),
-    (13, 14),
-    (14, 21),
-    (14, 19),
-    (15, 17),
-    (16, 18),
-    (19, 20),
-    (22, 23),
-]
-
-EDGE_COLORS = [
-    (153, 0, 51),
-    (153, 0, 102),
-    (143, 0, 214),
-    (153, 0, 0),
-    (153, 51, 0),
-    (102, 153, 0),
-    (153, 102, 0),
-    (153, 153, 0),
-    (51, 153, 0),
-    (0, 153, 0),
-    (0, 153, 51),
-    (0, 102, 153),
-    (0, 153, 102),
-    (0, 153, 153),
-    (0, 153, 153),
-    (0, 153, 153),
-    (0, 51, 153),
-    (0, 0, 153),
-    (0, 0, 153),
-    (0, 0, 153),
-    (153, 0, 153),
-    (51, 0, 153),
-    (0, 0, 153),
-    (0, 0, 153),
-]
-
-NUM_EDGES = len(EDGES_INDEXES)
 
 
 def get_succes_prev_frame(index, frame, frames):
@@ -162,21 +82,6 @@ def get_bone_pos(index, frame, frames):
 
 WIN_SIZE = (850, 600)
 bones = []
-
-
-class Skeletal:
-    def __init__(self):
-        self.bones_count = NUM_POINTS
-        self.frames_count = 0
-        self.frames = []
-
-    def get_color(self, index: int):
-        return BONE_COLORS[index]
-
-    def add_frames(self, frames):
-        self.frames.extend(frames)
-        self.frames_count = len(self.frames)
-
 
 if __name__ == "__main__":
     imgs = list_all_files(DIR_WITH_POSES, ANIM_NAME)
