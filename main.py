@@ -1,13 +1,13 @@
 import glob
-import pygame
 import os
 import os.path
 import json
+import math
 
 DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\pose_walk"
 ANIM_NAME = "walk"
-# DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\openpose_run_forward_flip"
-# ANIM_NAME = "run_forward_flip"
+DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\openpose_run_forward_flip"
+ANIM_NAME = "run_forward_flip"
 DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\openpose_kick"
 ANIM_NAME = "kick"
 
@@ -160,51 +160,34 @@ def get_bone_pos(index, frame, frames):
     return (pos1[0] + delta_x * cur_offset, pos1[0] + delta_y * cur_offset)
 
 
-def run_pygame(frames):
-    pygame.init()
-    window = pygame.display.set_mode((800, 600))
-    time = pygame.time.get_ticks()
-    getTicksLastFrame = time
+WIN_SIZE = (850, 600)
+bones = []
 
-    current_frame = 0.0
-    max_frames = len(frames)
-    while True:
-        time = pygame.time.get_ticks()
-        delta_time = (time - getTicksLastFrame) / 30.0
-        getTicksLastFrame = time
 
-        current_frame = current_frame + delta_time
-        if (current_frame >= max_frames):
-            current_frame = 0
+class Skeletal:
+    def __init__(self):
+        self.bones_count = NUM_POINTS
+        self.frames_count = 0
+        self.frames = []
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+    def get_color(self, index: int):
+        return BONE_COLORS[index]
 
-        window.fill((127, 127, 127))
-
-        frame = int(current_frame)
-
-        # draw edges
-        for i in range(NUM_EDGES):
-            edge = EDGES_INDEXES[i]
-            pos1 = get_bone_pos(edge[0], frame, frames)
-            pos2 = get_bone_pos(edge[1], frame, frames)
-            if pos1 and pos2:
-                pygame.draw.line(window, EDGE_COLORS[i], pos1, pos2, 5)
-
-        # draw points
-        for i in range(NUM_POINTS):
-            coord = get_bone_pos(i, frame, frames)
-            color = BONE_COLORS[i]
-            if coord:
-                pygame.draw.circle(window, color, coord, 5, 0)
-
-        pygame.display.update()
+    def add_frames(self, frames):
+        self.frames.extend(frames)
+        self.frames_count = len(self.frames)
 
 
 if __name__ == "__main__":
     imgs = list_all_files(DIR_WITH_POSES, ANIM_NAME)
     frames = extract_frames(imgs)
-    run_pygame(frames)
+
+    skeletal = Skeletal()
+    skeletal.add_frames(frames)
+
+    from app import MainWindow
+
+    main_app = MainWindow()
+    main_app.set_skeletal(skeletal)
+    main_app.show_window()
+    main_app.exec()
