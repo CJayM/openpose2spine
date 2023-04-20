@@ -93,6 +93,9 @@ class MainWindow(BaseApp):
                 self.bone_ids.append(bone)
                 dpg.draw_circle((0, 0), 5, fill=skeletal.get_color(i))
 
+    def set_animation(self, animation):
+        self.animation = animation
+
     def on_resize(self, id, rect):
         inner_width = rect[2]
         inner_height = rect[3]
@@ -111,12 +114,12 @@ class MainWindow(BaseApp):
         # dpg.set_value(self.elapsed_text, "{:.5f}".format(self.elapsed))
 
     def on_frame(self, frame):
-        frame = frame % self.skeletal.frames_count
+        frame = frame % self.animation.frames_count
         dpg.set_value(self.fps_text, "{:d}".format(frame))
 
-        frame_data = self.skeletal.frames[frame]
+        frame_data = self.animation.frames[frame]
         for i in range(self.skeletal.bones_count):
-            dpg.apply_transform(self.bone_ids[i], dpg.create_translation_matrix(self.skeletal.frames[frame][i]))
+            dpg.apply_transform(self.bone_ids[i], dpg.create_translation_matrix(frame_data[i]))
 
         # draw edges
         # for i in range(NUM_EDGES):

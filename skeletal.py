@@ -82,12 +82,6 @@ NUM_EDGES = len(EDGES_INDEXES)
 class Skeletal:
     def __init__(self):
         self.bones_count = NUM_POINTS
-        self.frames_count = 0
-        self.frames = []
 
     def get_color(self, index: int):
         return BONE_COLORS[index]
-
-    def add_frames(self, frames):
-        self.frames.extend(frames)
-        self.frames_count = len(self.frames)
