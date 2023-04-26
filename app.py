@@ -11,6 +11,7 @@ class BaseApp:
 
         dpg.create_context()
         dpg.create_viewport(title="OpenPose data Converter", x_pos=0, y_pos=0, width=width, height=height)
+
         dpg.setup_dearpygui()
         dpg.set_viewport_resize_callback(self.on_resize)
 
@@ -28,7 +29,7 @@ class BaseApp:
 
     def show_window(self):
         dpg.show_viewport()
-        dpg.set_primary_window("Primary Window", True)
+        dpg.set_primary_window(self.main_window, True)
 
     def on_update(self, delta: float):
         pass

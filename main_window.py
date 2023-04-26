@@ -19,31 +19,37 @@ class MainWindow(BaseApp):
         self.autoplay = True
         super().__init__(*args, **kwargs)
 
+        with dpg.font_registry():
+            with dpg.font("DroidSans.ttf", 16) as font1:
+                dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
+
+        dpg.bind_font(font1)
+
+        dpg.configure_app(docking=True, docking_space=True, load_init_file="custom_layout.ini")
+
     def init_ui(self):
         dpg.configure_item(self.main_window, no_scrollbar=True)
 
-        with dpg.child_window(width=200, height=300) as left_panel:
+        with dpg.window(label="Привет Миииир", tag="LeftPanel") as left_panel:
             self.left_panel = left_panel
+            dpg.add_button(label="Save Ini File", callback=lambda: dpg.save_init_file("custom_layout.ini"))
 
             with dpg.group(horizontal=True):
                 self.score_text = dpg.add_text(default_value="delta")
                 self.elapsed_text = dpg.add_text(default_value="elapsed")
                 self.fps_text = dpg.add_text(default_value="fps")
 
-        with dpg.child_window(width=500, height=500, pos=(220, 8), no_scrollbar=True) as right_panel:
+        with dpg.window(label="Second Window", tag="SecondWindow") as right_panel:
             self.right_panel = right_panel
+            with dpg.group(horizontal=True, horizontal_spacing=0.3):
+                dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Left)
+                dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Right)
+
             self.frame_slider = dpg.add_slider_int(pos=[0, 500], width=500, height=4, indent=0,
                                                    callback=self.set_current_frame)
 
             with dpg.drawlist(width=500, height=500) as canvas:
                 self.canvas = canvas
-        with dpg.item_handler_registry(show=False, tag="__frame_slider_handler"):
-            # m_release = dpg.add_mouse_release_handler(button=dpg.mvMouseButton_Left)
-            # dpg.add_item_clicked_handler(tag=self.frame_slider, callback=self.on_current_frame_drop)
-            dpg.add_item_hover_handler(callback=self.on_hover_in)
-            # dpg.add_item_clicked_handler(callback=self.on_hover_out)
-
-        dpg.bind_item_handler_registry(self.frame_slider, "__frame_slider_handler")
 
     def set_skeletal(self, skeletal):
         self.skeletal = skeletal
@@ -58,17 +64,18 @@ class MainWindow(BaseApp):
         dpg.configure_item(self.frame_slider, min_value=0, max_value=animation.frames_count - 1)
 
     def on_resize(self, id, rect):
-        inner_width = rect[2]
-        inner_height = rect[3]
-        gap = 4
-        left_panel_width = 200
-        dpg.configure_item(self.left_panel, width=left_panel_width, height=inner_height - gap * 4, pos=[gap, gap + gap])
-        dpg.configure_item(self.right_panel, width=inner_width - left_panel_width - gap * 3,
-                           height=inner_height - gap * 4, pos=[left_panel_width + gap + gap, gap + gap])
-
-        rect = dpg.get_item_rect_size(self.right_panel)
-        dpg.configure_item(self.canvas, width=rect[0], height=rect[1])
-        dpg.configure_item(self.frame_slider, width=rect[0], pos=(0, rect[1] - 22))
+        pass
+        # inner_width = rect[2]
+        # inner_height = rect[3]
+        # gap = 4
+        # left_panel_width = 200
+        # dpg.configure_item(self.left_panel, width=left_panel_width, height=inner_height - gap * 4, pos=[gap, gap + gap])
+        # dpg.configure_item(self.right_panel, width=inner_width - left_panel_width - gap * 3,
+        #                    height=inner_height - gap * 4, pos=[left_panel_width + gap + gap, gap + gap])
+        #
+        # rect = dpg.get_item_rect_size(self.right_panel)
+        # dpg.configure_item(self.canvas, width=rect[0], height=rect[1])
+        # dpg.configure_item(self.frame_slider, width=rect[0], pos=(0, rect[1] - 22))
 
     def on_update(self, delta: float):
         pass

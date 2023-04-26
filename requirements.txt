@@ -1,2 +1,1 @@
-pygame~=2.3.0
 dearpygui~=1.9.0
