@@ -4,7 +4,7 @@ from app import BaseApp
 
 
 class MainWindow(BaseApp):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, win, *args, **kwargs):
         self.frame_slider = None
         self.animation = None
         self.elapsed_text = None
@@ -13,10 +13,11 @@ class MainWindow(BaseApp):
         self.score_text = None
         self.bone_ids = []
         self.canvas = None
-        self.right_panel = None
-        self.left_panel = None
         self.skeletal = None
         self.autoplay = True
+        self.window = win
+        self.layout = None
+
         super().__init__(*args, **kwargs)
 
         with dpg.font_registry():
@@ -25,31 +26,59 @@ class MainWindow(BaseApp):
 
         dpg.bind_font(font1)
 
-        dpg.configure_app(docking=True, docking_space=True, load_init_file="custom_layout.ini")
+        dpg.configure_app(load_init_file="open_pose_app.ini")
 
     def init_ui(self):
-        dpg.configure_item(self.main_window, no_scrollbar=True)
+        dpg.push_container_stack(self.window)
 
-        with dpg.window(label="Привет Миииир", tag="LeftPanel") as left_panel:
-            self.left_panel = left_panel
-            dpg.add_button(label="Save Ini File", callback=lambda: dpg.save_init_file("custom_layout.ini"))
+        self.layout = dpg.add_table(header_row=False, resizable=True,
+                                    no_host_extendX=False, row_background=True, delay_search=True)
+        dpg.push_container_stack(self.layout)
+        if True:
+            self.left_column = dpg.add_table_column(width_stretch=True, init_width_or_weight=0.0)
+            dpg.add_table_column(width_fixed=True, init_width_or_weight=300)
 
-            with dpg.group(horizontal=True):
+            dpg.push_container_stack(dpg.add_table_row())
+            if True:
+                self.layout_1_6 = dpg.add_table(header_row=False, resizable=True,
+                                                no_host_extendX=False, row_background=True, delay_search=True)
+                dpg.push_container_stack(self.layout_1_6)
+
+                with dpg.item_handler_registry(tag="work_table_handler") as handler:
+                    dpg.add_item_resize_handler(callback=lambda a, b, c: print(a, b, c))
+
+
+                if True:
+                    self.left_column_2 = dpg.add_table_column(width_stretch=True)
+                    dpg.bind_item_handler_registry(self.left_column_2, "work_table_handler")
+
+                    with dpg.table_row():
+                        self.canvas = dpg.add_drawlist(width=500, height=600)
+
+                    with dpg.table_row():
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Left)
+                            dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Right)
+
+                    with dpg.table_row():
+                        self.frame_slider = dpg.add_slider_int(callback=self.set_current_frame)
+                dpg.pop_container_stack()
+
+        with dpg.group():
+            with dpg.group(horizontal=True, horizontal_spacing=0.3):
                 self.score_text = dpg.add_text(default_value="delta")
                 self.elapsed_text = dpg.add_text(default_value="elapsed")
                 self.fps_text = dpg.add_text(default_value="fps")
-
-        with dpg.window(label="Second Window", tag="SecondWindow") as right_panel:
-            self.right_panel = right_panel
             with dpg.group(horizontal=True, horizontal_spacing=0.3):
-                dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Left)
-                dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Right)
+                dpg.add_button(label="Save Ini File",
+                               callback=lambda: dpg.save_init_file("custom_layout.ini"))
 
-            self.frame_slider = dpg.add_slider_int(pos=[0, 500], width=500, height=4, indent=0,
-                                                   callback=self.set_current_frame)
+            dpg.highlight_table_column(self.layout, 0, [255, 0, 0, 100])
+            dpg.highlight_table_column(self.layout, 1, [255, 255, 200, 100])
 
-            with dpg.drawlist(width=500, height=500) as canvas:
-                self.canvas = canvas
+            dpg.pop_container_stack()
+            dpg.pop_container_stack()
+            dpg.pop_container_stack()
 
     def set_skeletal(self, skeletal):
         self.skeletal = skeletal
@@ -64,7 +93,10 @@ class MainWindow(BaseApp):
         dpg.configure_item(self.frame_slider, min_value=0, max_value=animation.frames_count - 1)
 
     def on_resize(self, id, rect):
-        pass
+        rect = dpg.get_item_rect_size(self.window)
+        par = dpg.get_item_parent(self.canvas)
+        # dpg.configure_item(self.layout, height=rect[1] - 40)
+        dpg.configure_item(self.canvas, height=rect[1] - 100)
         # inner_width = rect[2]
         # inner_height = rect[3]
         # gap = 4
@@ -73,7 +105,6 @@ class MainWindow(BaseApp):
         # dpg.configure_item(self.right_panel, width=inner_width - left_panel_width - gap * 3,
         #                    height=inner_height - gap * 4, pos=[left_panel_width + gap + gap, gap + gap])
         #
-        # rect = dpg.get_item_rect_size(self.right_panel)
         # dpg.configure_item(self.canvas, width=rect[0], height=rect[1])
         # dpg.configure_item(self.frame_slider, width=rect[0], pos=(0, rect[1] - 22))
 
