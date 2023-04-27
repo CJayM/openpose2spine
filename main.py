@@ -157,8 +157,23 @@ if __name__ == "__main__":
 
     from main_window import MainWindow
 
-    main_app = MainWindow()
+    dpg.create_context()
+
+    wnd = dpg.add_window(tag="root", no_scrollbar=True)
+    main_app = MainWindow(wnd)
+    dpg.create_viewport(title="OpenPose data Converter")
+    dpg.setup_dearpygui()
+    dpg.show_viewport()
+    dpg.set_primary_window(wnd, True)
+
     main_app.set_skeletal(skeletal)
     main_app.set_animation(animation)
-    main_app.show_window()
-    main_app.exec()
+
+    try:
+        dpg.start_dearpygui()
+    finally:
+        dpg.destroy_context()
+
+    pass
+    # main_app.show_window()
+    # main_app.exec()

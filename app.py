@@ -5,21 +5,11 @@ class BaseApp:
     def __init__(self, width: int = 800, height: int = 600):
         self.width = width
         self.height = height
-        self.main_window = None
 
         self.prev_frame = 0
-
-        dpg.create_context()
-        dpg.create_viewport(title="OpenPose data Converter", x_pos=0, y_pos=0, width=width, height=height)
-
-        dpg.setup_dearpygui()
         dpg.set_viewport_resize_callback(self.on_resize)
 
-        with dpg.window(tag="Primary Window", autosize=True, no_close=True, no_resize=True, no_collapse=True,
-                        no_move=True,
-                        no_title_bar=True) as main_window:
-            self.main_window = main_window
-            self.init_ui()
+        self.init_ui()
 
     def exit(self):
         dpg.stop_dearpygui()
@@ -28,8 +18,7 @@ class BaseApp:
         dpg.destroy_context()
 
     def show_window(self):
-        dpg.show_viewport()
-        dpg.set_primary_window(self.main_window, True)
+        pass
 
     def on_update(self, delta: float):
         pass
