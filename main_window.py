@@ -1,23 +1,20 @@
 from dearpygui import dearpygui as dpg
 import threading
+
+from anim_panel import AnimPanel
 from app import BaseApp
 from time import sleep, process_time_ns
 
 
 class MainWindow(BaseApp):
     def __init__(self, *args, **kwargs):
-        self.canvas_bg = None
+        self.anim_panel = None
         self.btn_play = None
         self.second_wnd = None
         self.current_frame = None
-        self.time_slider = None
-        self.animation = None
         self.elapsed_text = None
-        self.fps_text = None
         self.elapsed = 0
         self.score_text = None
-        self.bone_ids = []
-        self.canvas = None
         self.skeletal = None
         self.window = None
         self.layout = None
@@ -76,8 +73,6 @@ class MainWindow(BaseApp):
                     self.current_frame = frame
                     self.on_frame(frame)
 
-                # print("UPD", current_frame)
-
     def update_second_layout(self):
         full_width = dpg.get_viewport_width()
         full_height = dpg.get_viewport_height()
@@ -85,24 +80,8 @@ class MainWindow(BaseApp):
         second_pos = (item_cfg["width"], 0)
         second_width = full_width - item_cfg["width"]
         dpg.configure_item(self.second_wnd, pos=second_pos, width=second_width, height=full_height)
-        padding = 20
-        slider_height = 20
-        slider_y = full_height - slider_height - padding - padding - 5
-        dpg.configure_item(self.time_slider,
-                           pos=(0, slider_y),
-                           width=second_width - padding,
-                           height=slider_height
-                           )
-        dpg.configure_item(self.canvas,
-                           pos=(0, 0),
-                           width=second_width - padding,
-                           height=slider_y - 10
-                           )
-        dpg.configure_item(self.canvas_bg,
-                           pmin=(0, 0),
-                           pmax=(second_width - padding - padding, slider_y - 10),
-                           color=(0,0,0)
-                           )
+
+        self.anim_panel.resize(second_width, full_height)
 
     def on_parent_resize(self):
         self.update_second_layout()
@@ -119,7 +98,6 @@ class MainWindow(BaseApp):
                 with dpg.group(horizontal=True, horizontal_spacing=0.3):
                     self.score_text = dpg.add_text(default_value="delta")
                     self.elapsed_text = dpg.add_text(default_value="elapsed")
-                    self.fps_text = dpg.add_text(default_value="fps")
                 with dpg.group(horizontal=True, horizontal_spacing=0.3):
                     dpg.add_button(label="Save Ini File",
                                    callback=lambda: dpg.save_init_file("custom_layout.ini"))
@@ -128,10 +106,7 @@ class MainWindow(BaseApp):
                         no_close=True,
                         no_move=True, no_resize=True, no_bring_to_front_on_focus=True) as second_wnd:
             self.second_wnd = second_wnd
-            with dpg.drawlist(pos=(0, 0), width=800, height=600) as self.canvas:
-                self.canvas_bg = dpg.draw_rectangle((0, 0), (300, 300), fill=(60, 60, 60), tag="canvas_bg")
-            self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=100,
-                                                  callback=self.set_current_frame)
+            self.anim_panel = AnimPanel(800, 600, parent=self.second_wnd)
 
             with dpg.item_handler_registry(tag="left_panel_handler") as handler:
                 dpg.add_item_resize_handler(callback=self.on_parent_resize)
@@ -140,36 +115,18 @@ class MainWindow(BaseApp):
 
     def set_skeletal(self, skeletal):
         self.skeletal = skeletal
-
-        for i in range(skeletal.bones_count):
-            with dpg.draw_node(parent=self.canvas) as bone:
-                self.bone_ids.append(bone)
-                dpg.draw_circle((0, 0), 5, fill=skeletal.get_color(i))
+        self.anim_panel.set_skeletal(skeletal)
 
     def set_animation(self, animation):
-        self.animation = animation
-        dpg.configure_item(self.time_slider, min_value=0, max_value=animation.frames_count - 1)
+        self.anim_panel.set_animation(animation)
 
     def on_resize(self, id, rect):
         full_height = dpg.get_viewport_height()
         dpg.configure_item(self.window, height=full_height)
         self.update_second_layout()
 
-    def on_update_frame(self, delta: float):
-        pass
-
-    def set_current_frame(self, id, value, data):
-        print(value, data)
-
     def on_frame(self, frame):
-        frame = frame % self.animation.frames_count
-        dpg.set_value(self.fps_text, "{:d}".format(frame))
-        dpg.set_value(self.time_slider, frame)
-
-        frame_data = self.animation.frames[frame]
-        for i in range(self.skeletal.bones_count):
-            pos = frame_data[i]            
-            dpg.apply_transform(self.bone_ids[i], dpg.create_translation_matrix(pos))
+        self.anim_panel.set_frame(frame)
 
         # draw edges
         # for i in range(NUM_EDGES):
