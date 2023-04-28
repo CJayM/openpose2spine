@@ -6,6 +6,7 @@ from time import sleep, process_time_ns
 
 class MainWindow(BaseApp):
     def __init__(self, *args, **kwargs):
+        self.canvas_bg = None
         self.btn_play = None
         self.second_wnd = None
         self.current_frame = None
@@ -22,11 +23,9 @@ class MainWindow(BaseApp):
         self.layout = None
 
         self.is_playing = False
-        self.updates = 0
         self.animation_updates = 0
         self.elapsed = 0
         self.updater = None
-        self.timer = None
         self.last_time = process_time_ns() // 1000000
 
         super().__init__(*args, **kwargs)
@@ -46,16 +45,13 @@ class MainWindow(BaseApp):
 
         self.is_playing = True
         self.updater = threading.Thread(target=self.on_update)
-        self.timer = threading.Thread(target=self.on_time)
         self.updater.start()
-        self.timer.start()
 
     def play_stop(self):
         if self.is_playing:
             self.stop_play()
         else:
             self.start_play()
-
 
     def stop_play(self):
         if not self.is_playing:
@@ -65,27 +61,22 @@ class MainWindow(BaseApp):
 
     def close(self):
         self.is_playing = False
-        self.timer.join()
         self.updater.join()
 
     def on_update(self):
-        while self.is_playing or self.updates:
-            sleep(1.0 / 120)
+        while self.is_playing:
+            sleep(0)
             ntime = process_time_ns() // 1000000
             delta = ntime - self.last_time
-            if delta > (1000 / 60):
+            if delta > (1000.0 / 60):
                 self.last_time = ntime
                 self.elapsed += delta
-                frame = self.elapsed // 60
+                frame = self.elapsed // 30
                 if self.current_frame != frame:
                     self.current_frame = frame
                     self.on_frame(frame)
 
                 # print("UPD", current_frame)
-
-    def on_time(self):
-        while self.is_playing:
-            sleep(0)
 
     def update_second_layout(self):
         full_width = dpg.get_viewport_width()
@@ -105,7 +96,12 @@ class MainWindow(BaseApp):
         dpg.configure_item(self.canvas,
                            pos=(0, 0),
                            width=second_width - padding,
-                           height=slider_height - 10
+                           height=slider_y - 10
+                           )
+        dpg.configure_item(self.canvas_bg,
+                           pmin=(0, 0),
+                           pmax=(second_width - padding - padding, slider_y - 10),
+                           color=(0,0,0)
                            )
 
     def on_parent_resize(self):
@@ -117,7 +113,6 @@ class MainWindow(BaseApp):
             self.window = left_window
 
             with dpg.group(horizontal=True, tag="anim_buttons_group"):
-                # dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Left, callback=self.stop_play)
                 self.btn_play = dpg.add_button(label="Play", callback=self.play_stop)
 
             with dpg.group():
@@ -129,10 +124,12 @@ class MainWindow(BaseApp):
                     dpg.add_button(label="Save Ini File",
                                    callback=lambda: dpg.save_init_file("custom_layout.ini"))
 
-        with dpg.window(tag="second", pos=(300, 0), width=100, no_title_bar=True, no_scrollbar=True, no_close=True,
+        with dpg.window(tag="second", pos=(300, 0), width=100, height=200, no_title_bar=True, no_scrollbar=True,
+                        no_close=True,
                         no_move=True, no_resize=True, no_bring_to_front_on_focus=True) as second_wnd:
             self.second_wnd = second_wnd
-            self.canvas = dpg.add_drawlist(pos=(0, 0), width=100, height=100)
+            with dpg.drawlist(pos=(0, 0), width=800, height=600) as self.canvas:
+                self.canvas_bg = dpg.draw_rectangle((0, 0), (300, 300), fill=(60, 60, 60), tag="canvas_bg")
             self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=100,
                                                   callback=self.set_current_frame)
 
@@ -171,7 +168,8 @@ class MainWindow(BaseApp):
 
         frame_data = self.animation.frames[frame]
         for i in range(self.skeletal.bones_count):
-            dpg.apply_transform(self.bone_ids[i], dpg.create_translation_matrix(frame_data[i]))
+            pos = frame_data[i]            
+            dpg.apply_transform(self.bone_ids[i], dpg.create_translation_matrix(pos))
 
         # draw edges
         # for i in range(NUM_EDGES):
