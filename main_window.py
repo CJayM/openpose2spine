@@ -1,9 +1,6 @@
 from dearpygui import dearpygui as dpg
-import threading
-
 from anim_panel import AnimPanel
 from app import BaseApp
-from time import sleep, process_time_ns
 
 
 class MainWindow(BaseApp):
@@ -11,7 +8,6 @@ class MainWindow(BaseApp):
         self.anim_panel = None
         self.btn_play = None
         self.second_wnd = None
-        self.current_frame = None
         self.elapsed_text = None
         self.elapsed = 0
         self.score_text = None
@@ -19,11 +15,7 @@ class MainWindow(BaseApp):
         self.window = None
         self.layout = None
 
-        self.is_playing = False
         self.animation_updates = 0
-        self.elapsed = 0
-        self.updater = None
-        self.last_time = process_time_ns() // 1000000
 
         super().__init__(*args, **kwargs)
 
@@ -33,45 +25,6 @@ class MainWindow(BaseApp):
 
         dpg.bind_font(font1)
         # dpg.configure_app(load_init_file="open_pose_app.ini")
-
-    def start_play(self):
-        if self.is_playing:
-            return
-
-        dpg.configure_item(self.btn_play, label="Stop")
-
-        self.is_playing = True
-        self.updater = threading.Thread(target=self.on_update)
-        self.updater.start()
-
-    def play_stop(self):
-        if self.is_playing:
-            self.stop_play()
-        else:
-            self.start_play()
-
-    def stop_play(self):
-        if not self.is_playing:
-            return
-        self.is_playing = False
-        dpg.configure_item(self.btn_play, label="Play")
-
-    def close(self):
-        self.is_playing = False
-        self.updater.join()
-
-    def on_update(self):
-        while self.is_playing:
-            sleep(0)
-            ntime = process_time_ns() // 1000000
-            delta = ntime - self.last_time
-            if delta > (1000.0 / 60):
-                self.last_time = ntime
-                self.elapsed += delta
-                frame = self.elapsed // 30
-                if self.current_frame != frame:
-                    self.current_frame = frame
-                    self.on_frame(frame)
 
     def update_second_layout(self):
         full_width = dpg.get_viewport_width()
@@ -90,9 +43,6 @@ class MainWindow(BaseApp):
         with dpg.window(tag="root", no_scrollbar=True, no_title_bar=True, no_close=True,
                         pos=(0, 0), width=300, no_move=True) as left_window:
             self.window = left_window
-
-            with dpg.group(horizontal=True, tag="anim_buttons_group"):
-                self.btn_play = dpg.add_button(label="Play", callback=self.play_stop)
 
             with dpg.group():
                 with dpg.group(horizontal=True, horizontal_spacing=0.3):
@@ -124,9 +74,6 @@ class MainWindow(BaseApp):
         full_height = dpg.get_viewport_height()
         dpg.configure_item(self.window, height=full_height)
         self.update_second_layout()
-
-    def on_frame(self, frame):
-        self.anim_panel.set_frame(frame)
 
         # draw edges
         # for i in range(NUM_EDGES):
