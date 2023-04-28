@@ -1,11 +1,15 @@
 from dearpygui import dearpygui as dpg
-
+import threading
 from app import BaseApp
+from time import sleep, process_time_ns
 
 
 class MainWindow(BaseApp):
     def __init__(self, *args, **kwargs):
-        self.timeslider = None
+        self.btn_play = None
+        self.second_wnd = None
+        self.current_frame = None
+        self.time_slider = None
         self.animation = None
         self.elapsed_text = None
         self.fps_text = None
@@ -14,9 +18,16 @@ class MainWindow(BaseApp):
         self.bone_ids = []
         self.canvas = None
         self.skeletal = None
-        self.autoplay = True
         self.window = None
         self.layout = None
+
+        self.is_playing = False
+        self.updates = 0
+        self.animation_updates = 0
+        self.elapsed = 0
+        self.updater = None
+        self.timer = None
+        self.last_time = process_time_ns() // 1000000
 
         super().__init__(*args, **kwargs)
 
@@ -26,6 +37,55 @@ class MainWindow(BaseApp):
 
         dpg.bind_font(font1)
         # dpg.configure_app(load_init_file="open_pose_app.ini")
+
+    def start_play(self):
+        if self.is_playing:
+            return
+
+        dpg.configure_item(self.btn_play, label="Stop")
+
+        self.is_playing = True
+        self.updater = threading.Thread(target=self.on_update)
+        self.timer = threading.Thread(target=self.on_time)
+        self.updater.start()
+        self.timer.start()
+
+    def play_stop(self):
+        if self.is_playing:
+            self.stop_play()
+        else:
+            self.start_play()
+
+
+    def stop_play(self):
+        if not self.is_playing:
+            return
+        self.is_playing = False
+        dpg.configure_item(self.btn_play, label="Play")
+
+    def close(self):
+        self.is_playing = False
+        self.timer.join()
+        self.updater.join()
+
+    def on_update(self):
+        while self.is_playing or self.updates:
+            sleep(1.0 / 120)
+            ntime = process_time_ns() // 1000000
+            delta = ntime - self.last_time
+            if delta > (1000 / 60):
+                self.last_time = ntime
+                self.elapsed += delta
+                frame = self.elapsed // 60
+                if self.current_frame != frame:
+                    self.current_frame = frame
+                    self.on_frame(frame)
+
+                # print("UPD", current_frame)
+
+    def on_time(self):
+        while self.is_playing:
+            sleep(0)
 
     def update_second_layout(self):
         full_width = dpg.get_viewport_width()
@@ -37,30 +97,28 @@ class MainWindow(BaseApp):
         padding = 20
         slider_height = 20
         slider_y = full_height - slider_height - padding - padding - 5
-        dpg.configure_item(self.timeslider,
+        dpg.configure_item(self.time_slider,
                            pos=(0, slider_y),
                            width=second_width - padding,
                            height=slider_height
                            )
         dpg.configure_item(self.canvas,
-                           pos=(0,0),
+                           pos=(0, 0),
                            width=second_width - padding,
                            height=slider_height - 10
                            )
 
-
     def on_parent_resize(self):
         self.update_second_layout()
+
     def init_ui(self):
         with dpg.window(tag="root", no_scrollbar=True, no_title_bar=True, no_close=True,
                         pos=(0, 0), width=300, no_move=True) as left_window:
             self.window = left_window
 
             with dpg.group(horizontal=True, tag="anim_buttons_group"):
-                dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Left)
-                dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Right)
-
-
+                # dpg.add_button(label="Button", arrow=True, direction=dpg.mvDir_Left, callback=self.stop_play)
+                self.btn_play = dpg.add_button(label="Play", callback=self.play_stop)
 
             with dpg.group():
                 with dpg.group(horizontal=True, horizontal_spacing=0.3):
@@ -75,12 +133,14 @@ class MainWindow(BaseApp):
                         no_move=True, no_resize=True, no_bring_to_front_on_focus=True) as second_wnd:
             self.second_wnd = second_wnd
             self.canvas = dpg.add_drawlist(pos=(0, 0), width=100, height=100)
-            self.timeslider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=100, callback=self.set_current_frame)
+            self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=100,
+                                                  callback=self.set_current_frame)
 
             with dpg.item_handler_registry(tag="left_panel_handler") as handler:
                 dpg.add_item_resize_handler(callback=self.on_parent_resize)
 
             dpg.bind_item_handler_registry("root", "left_panel_handler")
+
     def set_skeletal(self, skeletal):
         self.skeletal = skeletal
 
@@ -91,29 +151,23 @@ class MainWindow(BaseApp):
 
     def set_animation(self, animation):
         self.animation = animation
-        dpg.configure_item(self.timeslider, min_value=0, max_value=animation.frames_count - 1)
+        dpg.configure_item(self.time_slider, min_value=0, max_value=animation.frames_count - 1)
 
     def on_resize(self, id, rect):
         full_height = dpg.get_viewport_height()
         dpg.configure_item(self.window, height=full_height)
         self.update_second_layout()
 
-    def on_update(self, delta: float):
+    def on_update_frame(self, delta: float):
         pass
 
     def set_current_frame(self, id, value, data):
         print(value, data)
 
-    def on_hover_in(self, id, value):
-        self.autoplay = False
-
     def on_frame(self, frame):
-        if not self.autoplay:
-            return
-
         frame = frame % self.animation.frames_count
         dpg.set_value(self.fps_text, "{:d}".format(frame))
-        dpg.set_value(self.timeslider, frame)
+        dpg.set_value(self.time_slider, frame)
 
         frame_data = self.animation.frames[frame]
         for i in range(self.skeletal.bones_count):
