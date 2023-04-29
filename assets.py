@@ -63,3 +63,45 @@ def init_fonts():
     dpg.bind_font(DEFAULT_FONT)
 
 
+class Themes:
+    primary_button = None
+    primary_button_toggled = None
+
+    secondary_button = None
+    secondary_button_toggled = None
+
+    def __init__(self):
+        if not Themes.primary_button:
+            with dpg.theme() as Themes.primary_button:
+                with dpg.theme_component(dpg.mvAll):
+                    dpg.add_theme_color(dpg.mvThemeCol_Button, (42, 91, 128), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (170, 228, 255), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (27, 125, 252), category=dpg.mvThemeCat_Core)
+
+            with dpg.theme() as Themes.primary_button_toggled:
+                with dpg.theme_component(dpg.mvAll):
+                    dpg.add_theme_color(dpg.mvThemeCol_Button, (61, 198, 255), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (170, 228, 255), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (27, 125, 252), category=dpg.mvThemeCat_Core)
+
+            with dpg.theme() as Themes.secondary_button:
+                with dpg.theme_component(dpg.mvAll):
+                    dpg.add_theme_color(dpg.mvThemeCol_Button, (51, 51, 55), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (29, 151, 236, 103), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (0, 119, 200, 153), category=dpg.mvThemeCat_Core)
+
+            with dpg.theme() as Themes.secondary_button_toggled:
+                with dpg.theme_component(dpg.mvAll):
+                    dpg.add_theme_color(dpg.mvThemeCol_Button, (81, 81, 85), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (59, 161, 255, 113), category=dpg.mvThemeCat_Core)
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (30, 149, 230, 163), category=dpg.mvThemeCat_Core)
+
+
+__theme_instance = None
+
+
+def get_themes():
+    global __theme_instance
+    if not __theme_instance:
+        __theme_instance = Themes()
+    return __theme_instance

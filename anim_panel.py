@@ -3,7 +3,15 @@ from time import sleep, process_time_ns
 import threading
 
 import assets
-from assets import IconCode
+from assets import IconCode, get_themes
+
+
+def toggle_item(id):
+    user_data = dpg.get_item_user_data(id)
+    theme1, theme2, is_toggled = user_data
+    is_toggled = not is_toggled
+    dpg.configure_item(id, user_data=(theme1, theme2, is_toggled))
+    dpg.bind_item_theme(id, theme1 if not is_toggled else theme2)
 
 
 class AnimPanel:
@@ -23,27 +31,22 @@ class AnimPanel:
         self.elapsed = 0
         self.updater = None
 
-        with dpg.theme() as self.theme_toggle_on:
-            with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, (61, 198, 255), category=dpg.mvThemeCat_Core)
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (170, 228, 255), category=dpg.mvThemeCat_Core)
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (27, 125, 252), category=dpg.mvThemeCat_Core)
-
-        with dpg.theme() as self.theme_toggle_off:
-            with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, (44, 122, 255), category=dpg.mvThemeCat_Core)
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (101, 158, 255), category=dpg.mvThemeCat_Core)
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (22, 77, 229), category=dpg.mvThemeCat_Core)
-
         with dpg.drawlist(pos=(0, 0), width=800, height=600) as self.canvas:
             self.canvas_bg = dpg.draw_rectangle((0, 0), (300, 300), fill=(60, 60, 60), tag="canvas_bg")
 
+        theme = get_themes()
         with dpg.group(horizontal=True) as self.buttons:
-            self.btn_go_start = dpg.add_button(label="", parent=self.buttons)
-            self.btn_stop = dpg.add_button(label="", parent=self.buttons)
-            self.btn_play = dpg.add_button(label="", callback=self.play_stop, parent=self.buttons)
-            self.btn_go_end = dpg.add_button(label="", parent=self.buttons)
-            self.btn_cycle = dpg.add_button(label=chr(IconCode.arrows_repeat), parent=self.buttons)
+            self.btn_go_start = dpg.add_button(label="", parent=self.buttons, width=20, height=20)
+            self.btn_stop = dpg.add_button(label="", parent=self.buttons, width=20, height=20)
+            self.btn_play = dpg.add_button(label="", callback=self.play_stop, parent=self.buttons
+                                           , user_data=(theme.primary_button, theme.primary_button_toggled, False),
+                                           width=20, height=20)
+
+            self.btn_go_end = dpg.add_button(label="", parent=self.buttons, width=20, height=20)
+            self.btn_cycle = dpg.add_button(label=chr(IconCode.arrows_repeat), parent=self.buttons,
+                                            callback=self.toggle_repeat,
+                                            user_data=(theme.secondary_button, theme.secondary_button_toggled, False),
+                                            width=20, height=20)
 
             dpg.bind_item_font(self.btn_go_start, assets.ICONS_FONT)
             dpg.bind_item_font(self.btn_stop, assets.ICONS_FONT)
@@ -51,9 +54,17 @@ class AnimPanel:
             dpg.bind_item_font(self.btn_go_end, assets.ICONS_FONT)
             dpg.bind_item_font(self.btn_cycle, assets.ICONS_FONT)
 
-        self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=100,
-                                              callback=self.set_current_frame
-                                              )
+            dpg.bind_item_theme(self.btn_play, theme.primary_button)
+            dpg.bind_item_theme(self.btn_cycle, theme.secondary_button)
+
+            self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=-1,
+                                                  callback=self.set_current_frame
+                                                  )
+            self.buttons_ids = [self.btn_go_start, self.btn_stop, self.btn_play, self.btn_go_end, self.btn_cycle]
+
+        with dpg.drawlist(pos=(10, 10), width=800, height=20, ) as self.dial_plate:
+            self.dial_plate_bg = dpg.draw_rectangle((0, 0), (846, 20), fill=(47, 47, 50), color=(47, 47, 50))
+
         with dpg.item_handler_registry(tag="anim_panel_handler") as self.anim_panel_handler:
             dpg.add_item_hover_handler(callback=self.on_hover)
             dpg.add_item_focus_handler(callback=self.on_focus)
@@ -63,6 +74,9 @@ class AnimPanel:
             dpg.add_item_toggled_open_handler(callback=self.on_toggled_open)
 
         dpg.bind_item_handler_registry(self.time_slider, "anim_panel_handler")
+
+    def toggle_repeat(self, id, data, user_data):
+        toggle_item(id)
 
     def on_hover(self, a, b, c):
         pass
@@ -100,7 +114,7 @@ class AnimPanel:
         slider_height = 20
         buttons_height = 20
         canvas_height = height - buttons_height - slider_height - 40
-        buttons_y = canvas_height - 10
+        buttons_y = canvas_height - 10 + 2
         slider_y = buttons_y + buttons_height + 5
         dpg.configure_item(self.canvas,
                            pos=(0, 0),
@@ -108,21 +122,59 @@ class AnimPanel:
                            height=canvas_height - padding
                            )
 
-        dpg.configure_item(self.buttons,
-                           pos=(200, buttons_y),
-                           # width=width - padding
+        pad = 6
+        x = 0
+        for id in self.buttons_ids:
+            dpg.configure_item(id, pos=(x, buttons_y))
+            x += 22
+        dpg.configure_item(self.time_slider,
+                           pos=(x + pad, buttons_y),
+                           width=width - padding - pad - x,
+                           height=slider_height
                            )
+        dial_plate_width = width - x - padding - pad
+
+        self.update_dial_plate((x, buttons_y), dial_plate_width)
         dpg.configure_item(self.canvas_bg,
                            pmin=(0, 0),
                            pmax=(width - padding, canvas_height),
                            color=(0, 0, 0)
                            )
 
-        dpg.configure_item(self.time_slider,
-                           pos=(0, slider_y),
-                           width=width - padding,
-                           height=slider_height
+    def update_dial_plate(self, pos, width):
+        pad = 6
+        x = pos[0]
+        dpg.configure_item(self.dial_plate,
+                           pos=(x + pad, pos[1]),
+                           width=width + x,
+                           height=20
                            )
+        dpg.configure_item(self.dial_plate_bg,
+                           pmin=(x, 0),
+                           pmax=(width + x, 20)
+                           )
+
+        count = self.animation.frames_count
+
+        step = width / count
+        frame_width = 1
+        for i in range(count):
+            dpg.draw_rectangle(pmin=(x + step * i, 0), pmax=(x + step * i + frame_width, 20), parent=self.dial_plate,
+                               fill=(127, 127, 127, 50), color=(255, 255, 255, 0))
+        for i in range(0, count, 5):
+            dpg.draw_rectangle(pmin=(x + step * i, 0), pmax=(x + step * i + frame_width, 20), parent=self.dial_plate,
+                               fill=(180, 160, 160, 50), color=(255, 255, 255, 0))
+            dpg.draw_text((x + step * i, 0), str(i), parent=self.dial_plate, size=12)
+        if count % 5 != 0:
+            dpg.draw_rectangle(pmin=(x + step * count, 0), pmax=(x + step * count + frame_width, 20),
+                               parent=self.dial_plate,
+                               fill=(180, 160, 160, 50), color=(255, 255, 255, 0))
+            dpg.draw_text((x + step * count - 6, 0), str(count), parent=self.dial_plate, size=12)
+
+        # pos = width + x - pad
+        # dpg.draw_text((pos-5, 0), str(count), parent=self.dial_plate, size=12)
+        # dpg.draw_rectangle(pmin=(pos, 0), pmax=(pos + frame_width, 20), parent=self.dial_plate, fill=(255, 255, 255, 50),
+        #                    color=(255, 255, 255, 0))
 
     def set_animation(self, animation):
         self.animation = animation
@@ -146,8 +198,7 @@ class AnimPanel:
             return
 
         dpg.configure_item(self.btn_play, label="")
-        dpg.bind_item_theme(self.btn_play, self.theme_toggle_on)
-
+        toggle_item(self.btn_play)
         self.is_playing = True
         self.updater = threading.Thread(target=self.on_update)
         self.updater.start()
@@ -163,7 +214,7 @@ class AnimPanel:
             return
         self.is_playing = False
         dpg.configure_item(self.btn_play, label="")
-        dpg.bind_item_theme(self.btn_play, self.theme_toggle_off)
+        toggle_item(self.btn_play)
 
     def close(self):
         self.is_playing = False
