@@ -8,7 +8,7 @@ DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\openpose_run_forward_fli
 ANIM_NAME = "run_forward_flip"
 DIR_WITH_POSES = r"D:\develop\openpose2spine\animations\openpose_kick"
 ANIM_NAME = "kick"
-
+import assets
 
 def get_succes_prev_frame(index, frame, frames):
     start_frame = frame
@@ -66,11 +66,12 @@ if __name__ == "__main__":
     from main_window import MainWindow
 
     dpg.create_context()
-
-    main_app = MainWindow()
+    assets.init_fonts()
     dpg.create_viewport(title="OpenPose data Converter")
-    dpg.setup_dearpygui()
+    # dpg.show_font_manager()
+    main_app = MainWindow()
     dpg.show_viewport()
+    dpg.setup_dearpygui()
 
     main_app.set_skeletal(skeletal)
     main_app.set_animation(animation)

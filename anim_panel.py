@@ -2,6 +2,8 @@ from dearpygui import dearpygui as dpg
 from time import sleep, process_time_ns
 import threading
 
+import assets
+
 
 class AnimPanel:
     def __init__(self, width, height, parent=None):
@@ -26,12 +28,43 @@ class AnimPanel:
         with dpg.group(horizontal=True) as self.buttons:
             dpg.add_button(label="prev", parent=self.buttons)
             dpg.add_button(label="stop", parent=self.buttons)
-            self.btn_play = dpg.add_button(label="Play", callback=self.play_stop, parent=self.buttons)
+            self.btn_play = dpg.add_button(label="", callback=self.play_stop, parent=self.buttons)
+            dpg.bind_item_font(self.btn_play, assets.ICONS_FONT)
             dpg.add_button(label="next", parent=self.buttons)
 
         self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=100,
                                               callback=self.set_current_frame
                                               )
+        with dpg.item_handler_registry(tag="anim_panel_handler") as self.anim_panel_handler:
+            dpg.add_item_hover_handler(callback=self.on_hover)
+            dpg.add_item_focus_handler(callback=self.on_focus)
+            dpg.add_item_active_handler(callback=self.on_active)
+            dpg.add_item_activated_handler(callback=self.on_activated)
+            dpg.add_item_deactivated_handler(callback=self.on_deactivated)
+            dpg.add_item_toggled_open_handler(callback=self.on_toggled_open)
+
+        dpg.bind_item_handler_registry(self.time_slider, "anim_panel_handler")
+
+    def on_hover(self, a, b, c):
+        pass
+        # print("On Hover", a, b, c)
+
+    def on_focus(self, a, b, c):
+        pass
+        # print("On Focus", a, b, c)
+
+    def on_active(self, a, b, c):
+        pass
+        # print("On Active", a, b, c)
+
+    def on_activated(self, a, b, c):
+        print("On Activeted", a, b, c)
+
+    def on_deactivated(self, a, b, c):
+        print("On Deactiveted", a, b, c)
+
+    def on_toggled_open(self, a, b, c):
+        print("On Toggled Open", a, b, c)
 
     def set_skeletal(self, skeletal):
         self.skeletal = skeletal
@@ -86,7 +119,8 @@ class AnimPanel:
             dpg.apply_transform(self.bone_ids[i], dpg.create_translation_matrix(pos))
 
     def set_current_frame(self, a, b, c):
-        print("SET", a, b, c)
+        pass
+        # print("SET", a, b, c)
 
     def start_play(self):
         if self.is_playing:

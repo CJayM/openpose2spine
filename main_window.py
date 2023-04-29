@@ -1,6 +1,7 @@
 from dearpygui import dearpygui as dpg
 from anim_panel import AnimPanel
 from app import BaseApp
+import assets
 
 
 class MainWindow(BaseApp):
@@ -19,11 +20,6 @@ class MainWindow(BaseApp):
 
         super().__init__(*args, **kwargs)
 
-        with dpg.font_registry():
-            with dpg.font("DroidSans.ttf", 16) as font1:
-                dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
-
-        dpg.bind_font(font1)
         # dpg.configure_app(load_init_file="open_pose_app.ini")
 
     def update_second_layout(self):
