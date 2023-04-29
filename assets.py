@@ -61,3 +61,5 @@ def init_fonts():
             # dpg.add_font_range(0xf363, 0xf363)
 
     dpg.bind_font(DEFAULT_FONT)
+
+

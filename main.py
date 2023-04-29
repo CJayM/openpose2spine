@@ -69,6 +69,7 @@ if __name__ == "__main__":
     assets.init_fonts()
     dpg.create_viewport(title="OpenPose data Converter")
     # dpg.show_font_manager()
+    dpg.show_style_editor()
     main_app = MainWindow()
     dpg.show_viewport()
     dpg.setup_dearpygui()

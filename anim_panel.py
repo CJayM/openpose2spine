@@ -3,7 +3,7 @@ from time import sleep, process_time_ns
 import threading
 
 import assets
-from assets import  IconCode
+from assets import IconCode
 
 
 class AnimPanel:
@@ -22,6 +22,18 @@ class AnimPanel:
         self.last_time = process_time_ns() // 1000000
         self.elapsed = 0
         self.updater = None
+
+        with dpg.theme() as self.theme_toggle_on:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, (61, 198, 255), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (170, 228, 255), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (27, 125, 252), category=dpg.mvThemeCat_Core)
+
+        with dpg.theme() as self.theme_toggle_off:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, (44, 122, 255), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (101, 158, 255), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (22, 77, 229), category=dpg.mvThemeCat_Core)
 
         with dpg.drawlist(pos=(0, 0), width=800, height=600) as self.canvas:
             self.canvas_bg = dpg.draw_rectangle((0, 0), (300, 300), fill=(60, 60, 60), tag="canvas_bg")
@@ -134,6 +146,7 @@ class AnimPanel:
             return
 
         dpg.configure_item(self.btn_play, label="")
+        dpg.bind_item_theme(self.btn_play, self.theme_toggle_on)
 
         self.is_playing = True
         self.updater = threading.Thread(target=self.on_update)
@@ -150,6 +163,7 @@ class AnimPanel:
             return
         self.is_playing = False
         dpg.configure_item(self.btn_play, label="")
+        dpg.bind_item_theme(self.btn_play, self.theme_toggle_off)
 
     def close(self):
         self.is_playing = False
