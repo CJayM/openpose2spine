@@ -3,6 +3,7 @@ from time import sleep, process_time_ns
 import threading
 
 import assets
+from assets import  IconCode
 
 
 class AnimPanel:
@@ -26,11 +27,17 @@ class AnimPanel:
             self.canvas_bg = dpg.draw_rectangle((0, 0), (300, 300), fill=(60, 60, 60), tag="canvas_bg")
 
         with dpg.group(horizontal=True) as self.buttons:
-            dpg.add_button(label="prev", parent=self.buttons)
-            dpg.add_button(label="stop", parent=self.buttons)
-            self.btn_play = dpg.add_button(label="", callback=self.play_stop, parent=self.buttons)
+            self.btn_go_start = dpg.add_button(label="", parent=self.buttons)
+            self.btn_stop = dpg.add_button(label="", parent=self.buttons)
+            self.btn_play = dpg.add_button(label="", callback=self.play_stop, parent=self.buttons)
+            self.btn_go_end = dpg.add_button(label="", parent=self.buttons)
+            self.btn_cycle = dpg.add_button(label=chr(IconCode.arrows_repeat), parent=self.buttons)
+
+            dpg.bind_item_font(self.btn_go_start, assets.ICONS_FONT)
+            dpg.bind_item_font(self.btn_stop, assets.ICONS_FONT)
             dpg.bind_item_font(self.btn_play, assets.ICONS_FONT)
-            dpg.add_button(label="next", parent=self.buttons)
+            dpg.bind_item_font(self.btn_go_end, assets.ICONS_FONT)
+            dpg.bind_item_font(self.btn_cycle, assets.ICONS_FONT)
 
         self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=100,
                                               callback=self.set_current_frame
@@ -126,7 +133,7 @@ class AnimPanel:
         if self.is_playing:
             return
 
-        dpg.configure_item(self.btn_play, label="||")
+        dpg.configure_item(self.btn_play, label="")
 
         self.is_playing = True
         self.updater = threading.Thread(target=self.on_update)
@@ -142,7 +149,7 @@ class AnimPanel:
         if not self.is_playing:
             return
         self.is_playing = False
-        dpg.configure_item(self.btn_play, label="Play")
+        dpg.configure_item(self.btn_play, label="")
 
     def close(self):
         self.is_playing = False
