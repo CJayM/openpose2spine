@@ -70,6 +70,7 @@ if __name__ == "__main__":
     dpg.create_viewport(title="OpenPose data Converter")
     # dpg.show_font_manager()
     # dpg.show_style_editor()
+    # dpg.show_item_registry()
     main_app = MainWindow()
     dpg.show_viewport()
     dpg.setup_dearpygui()

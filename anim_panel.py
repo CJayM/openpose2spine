@@ -30,29 +30,34 @@ class AnimPanel:
         self.last_time = process_time_ns() // 1000000
         self.elapsed = 0
         self.updater = None
+        self.dial_plate = None
+        self.dial_plate_items = []
 
         with dpg.drawlist(pos=(0, 0), width=800, height=600) as self.canvas:
             self.canvas_bg = dpg.draw_rectangle((0, 0), (300, 300), fill=(60, 60, 60), tag="canvas_bg")
 
         theme = get_themes()
         with dpg.group(horizontal=True) as self.buttons:
-            self.btn_go_start = dpg.add_button(label="", parent=self.buttons, width=20, height=20)
+            self.btn_go_start = dpg.add_button(label=chr(IconCode.backward_fast), parent=self.buttons, width=20,
+                                               height=20)
+            self.btn_step_prev = dpg.add_button(label=chr(IconCode.backward_step), parent=self.buttons, width=20,
+                                                height=20)
             self.btn_stop = dpg.add_button(label="", parent=self.buttons, width=20, height=20)
             self.btn_play = dpg.add_button(label="", callback=self.play_stop, parent=self.buttons
                                            , user_data=(theme.primary_button, theme.primary_button_toggled, False),
                                            width=20, height=20)
-
-            self.btn_go_end = dpg.add_button(label="", parent=self.buttons, width=20, height=20)
+            self.btn_step_next = dpg.add_button(label=chr(IconCode.forward_step), parent=self.buttons, width=20,
+                                                height=20)
+            self.btn_go_end = dpg.add_button(label=chr(IconCode.forward_fast), parent=self.buttons, width=20, height=20)
             self.btn_cycle = dpg.add_button(label=chr(IconCode.arrows_repeat), parent=self.buttons,
                                             callback=self.toggle_repeat,
                                             user_data=(theme.secondary_button, theme.secondary_button_toggled, False),
                                             width=20, height=20)
 
-            dpg.bind_item_font(self.btn_go_start, assets.ICONS_FONT)
-            dpg.bind_item_font(self.btn_stop, assets.ICONS_FONT)
-            dpg.bind_item_font(self.btn_play, assets.ICONS_FONT)
-            dpg.bind_item_font(self.btn_go_end, assets.ICONS_FONT)
-            dpg.bind_item_font(self.btn_cycle, assets.ICONS_FONT)
+            self.buttons_ids = [self.btn_go_start, self.btn_step_prev, self.btn_stop, self.btn_play, self.btn_step_next,
+                                self.btn_go_end, self.btn_cycle]
+            for id in self.buttons_ids:
+                dpg.bind_item_font(id, assets.ICONS_FONT)
 
             dpg.bind_item_theme(self.btn_play, theme.primary_button)
             dpg.bind_item_theme(self.btn_cycle, theme.secondary_button)
@@ -60,7 +65,6 @@ class AnimPanel:
             self.time_slider = dpg.add_slider_int(default_value=0, min_value=0, max_value=100, indent=0, width=-1,
                                                   callback=self.set_current_frame
                                                   )
-            self.buttons_ids = [self.btn_go_start, self.btn_stop, self.btn_play, self.btn_go_end, self.btn_cycle]
 
         with dpg.drawlist(pos=(10, 10), width=800, height=20, ) as self.dial_plate:
             self.dial_plate_bg = dpg.draw_rectangle((0, 0), (846, 20), fill=(47, 47, 50), color=(47, 47, 50))
@@ -144,37 +148,38 @@ class AnimPanel:
     def update_dial_plate(self, pos, width):
         pad = 6
         x = pos[0]
+
+        dpg.delete_item(self.dial_plate, children_only=True)
         dpg.configure_item(self.dial_plate,
                            pos=(x + pad, pos[1]),
                            width=width + x,
                            height=20
                            )
-        dpg.configure_item(self.dial_plate_bg,
-                           pmin=(x, 0),
-                           pmax=(width + x, 20)
-                           )
-
         count = self.animation.frames_count
 
         step = width / count
         frame_width = 1
         for i in range(count):
-            dpg.draw_rectangle(pmin=(x + step * i, 0), pmax=(x + step * i + frame_width, 20), parent=self.dial_plate,
-                               fill=(127, 127, 127, 50), color=(255, 255, 255, 0))
-        for i in range(0, count, 5):
-            dpg.draw_rectangle(pmin=(x + step * i, 0), pmax=(x + step * i + frame_width, 20), parent=self.dial_plate,
-                               fill=(180, 160, 160, 50), color=(255, 255, 255, 0))
-            dpg.draw_text((x + step * i, 0), str(i), parent=self.dial_plate, size=12)
-        if count % 5 != 0:
-            dpg.draw_rectangle(pmin=(x + step * count, 0), pmax=(x + step * count + frame_width, 20),
-                               parent=self.dial_plate,
-                               fill=(180, 160, 160, 50), color=(255, 255, 255, 0))
-            dpg.draw_text((x + step * count - 6, 0), str(count), parent=self.dial_plate, size=12)
+            item = dpg.draw_rectangle(pmin=(x + step * i + frame_width/2, 0), pmax=(x + step * i + frame_width + frame_width/2, 20),
+                                      parent=self.dial_plate,
+                                      fill=(127, 127, 127, 50), color=(255, 255, 255, 0))
+            self.dial_plate_items.append(item)
 
-        # pos = width + x - pad
-        # dpg.draw_text((pos-5, 0), str(count), parent=self.dial_plate, size=12)
-        # dpg.draw_rectangle(pmin=(pos, 0), pmax=(pos + frame_width, 20), parent=self.dial_plate, fill=(255, 255, 255, 50),
-        #                    color=(255, 255, 255, 0))
+        for i in range(0, count, 5):
+            item = dpg.draw_rectangle(pmin=(x + step * i + frame_width/2, 0), pmax=(x + step * i + frame_width + frame_width/2, 20),
+                                      parent=self.dial_plate,
+                                      fill=(180, 160, 160, 50), color=(255, 255, 255, 0))
+            self.dial_plate_items.append(item)
+            item = dpg.draw_text((x + step * i, 0), str(i), parent=self.dial_plate, size=12)
+            self.dial_plate_items.append(item)
+        if count % 5 != 0:
+            item = dpg.draw_rectangle(pmin=(x + step * count + frame_width/2, 0), pmax=(x + step * count + frame_width + frame_width/2, 20),
+                                      parent=self.dial_plate,
+                                      fill=(180, 160, 160, 50), color=(255, 255, 255, 0))
+            self.dial_plate_items.append(item)
+
+            item = dpg.draw_text((x + step * count - 6, 0), str(count), parent=self.dial_plate, size=12)
+            self.dial_plate_items.append(item)
 
     def set_animation(self, animation):
         self.animation = animation
@@ -189,9 +194,10 @@ class AnimPanel:
             pos = frame_data[i]
             dpg.apply_transform(self.bone_ids[i], dpg.create_translation_matrix(pos))
 
-    def set_current_frame(self, a, b, c):
-        pass
-        # print("SET", a, b, c)
+    def set_current_frame(self, a, frame, c):
+        # print("SET", a, frame, c)
+        self.elapsed = frame * 30
+        self.set_frame(frame)
 
     def start_play(self):
         if self.is_playing:

@@ -25,6 +25,8 @@ class IconCode:
     backward_step = 0xf048
     arrows_repeat = 0xf363
     slider = 0xf1de
+    forward_fast = 0xf050
+    backward_fast = 0xf049
 
 
 def init_fonts():
@@ -56,6 +58,9 @@ def init_fonts():
                 IconCode.backward_step,  # backward-step 
                 IconCode.arrows_repeat,  # arrows-repeat 
                 IconCode.slider,  # slider 
+                IconCode.forward_fast, # 
+                IconCode.backward_fast, # 
+
             ])
 
             # dpg.add_font_range(0xf363, 0xf363)
